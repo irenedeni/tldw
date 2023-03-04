@@ -7,6 +7,7 @@ const roboto = Roboto({
   weight: '400',
   subsets: ['latin'],
 })
+
 type Props = {
   whisperEndpoint: string;
   authToken: string;
@@ -14,7 +15,9 @@ type Props = {
 
 export default function Home({ whisperEndpoint, authToken } : Props) {
   const [file, setFile] = useState(null);
+  const [showTranscript, setShowTranscript] = useState(false);
   const [result, setResult] = useState('');
+  const [summary, setSummary] = useState('');
   const [loading, setLoading] = useState(false);
 
   const uploadFile = async (file: any) => {
@@ -48,8 +51,25 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
     const res = await uploadFile(file);
     setResult(res.text);
     setLoading(false);
-  };
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ textPrompt: res.text }),
+      });
 
+      const data = await response.json();
+      if (response.status !== 200) {
+        throw data.error || new Error(`Request failed with status ${response.status}`);
+      }
+
+      setSummary(data.result);
+    } catch(error) {
+      console.error(error);
+    }
+  };
 
   const handleChange = (e:any) => {
     if (e.target.files && e.target.files[0]) {
@@ -58,6 +78,7 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
       body.append("image", e.target.files[0]);
     }
   }
+
 
   return (
     <>
@@ -78,32 +99,40 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
               onChange={handleChange}
               className={styles.fileInput}
             />
-          <button
-            type="submit"
-            disabled={file ? false : true}
-            className={styles.submitBtn}
-          >
-            Process Audio
-          </button>
-        </form>
-        <div className="results">
-        {loading &&
-          <div className={styles.loadingSpinner}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="30" height="30">
-              <circle fill="none" stroke="#333" strokeWidth="2" cx="12" cy="12" r="10" strokeDasharray="30 60">
-                <animateTransform attributeName="transform" attributeType="XML" type="rotate" dur="1s" from="0 12 12" to="360 12 12" repeatCount="indefinite"/>
-              </circle>
-            </svg>
+            <button
+              type="submit"
+              disabled={file ? false : true}
+              className={styles.submitBtn}
+            >
+              Process Audio
+            </button>
+          </form>
+          <div className="results">
+            {loading &&
+              <div className={styles.loadingSpinner}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="30" height="30">
+                  <circle fill="none" stroke="#333" strokeWidth="2" cx="12" cy="12" r="10" strokeDasharray="30 60">
+                    <animateTransform attributeName="transform" attributeType="XML" type="rotate" dur="1s" from="0 12 12" to="360 12 12" repeatCount="indefinite"/>
+                  </circle>
+                </svg>
+              </div>
+            }
+            {summary && !loading && (
+              <div className={styles.resultContainer}>
+                <p>{summary}</p>
+                {!showTranscript && 
+                  <button onClick={() => setShowTranscript(true)}>Original Transcript</button>
+                }
+              </div>
+            )}
+            {showTranscript &&
+              <div className={styles.resultContainer}>
+                <h3 className={styles.resultTitle}>Original Transcription</h3>
+                <p className={styles.resultText}>{result}</p>
+              </div>
+            }
           </div>
-        }
-        {result && !loading && (
-          <div className={styles.resultContainer}>
-            <h3 className={styles.resultTitle}>Transcription</h3>
-            <p className={styles.resultText}>{result}</p>
-          </div>
-        )}
-      </div>
-      </div>
+        </div>
       </main>
     </>
   )

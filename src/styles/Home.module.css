@@ -71,6 +71,7 @@
   flex-direction:column;
   justify-content: center;
   align-items: center;
+  margin-top: 30px;
 }
 
 .resultContainer p {
@@ -79,6 +80,22 @@
 }
 
 .resultContainer h3 {
-  margin-top: 30px;
+  margin-top: 50px;
   margin-bottom: 20px;
+}
+
+.resultContainer button {
+  margin-top: 30px;
+    padding: 5px 10px;
+    background: #fff;
+    color: #333;
+    border: 1px solid #333;
+    border-radius: 4px;
+}
+
+.resultContainer button:hover {
+  cursor: pointer;
+  background: #fafafa;
+  color: #000;
+  border: 1px solid #000;
 }
