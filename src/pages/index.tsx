@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import Head from 'next/head'
-import { Inter } from 'next/font/google'
+import { Roboto } from 'next/font/google'
 import styles from '@/styles/Home.module.css'
 
-const inter = Inter({ subsets: ['latin'] })
-
+const roboto = Roboto({
+  weight: '400',
+  subsets: ['latin'],
+})
 type Props = {
   whisperEndpoint: string;
   authToken: string;
 }
-
 
 export default function Home({ whisperEndpoint, authToken } : Props) {
   const [file, setFile] = useState(null);
@@ -17,14 +18,11 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
   const [loading, setLoading] = useState(false);
 
   const uploadFile = async (file: any) => {
-    console.log('FILE1', file)
     setLoading(true);
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("model", "whisper-1");
-    console.log('formData', formData)
-    console.log('authToken', authToken)
 
     const data = await fetch(whisperEndpoint, {
       headers:{
@@ -34,11 +32,9 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
       body: formData,
     })
       .then((response) => {
-        console.log('response!!', response)
         return response.json()
       })
       .then((result) => {
-        console.log('result!!', result)
         return result;
       })
       .catch((error) => {
@@ -50,14 +46,12 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
   const handleSubmit = async (e:any) => {
     e.preventDefault();
     const res = await uploadFile(file);
-    console.log('res in index', res)
     setResult(res.text);
     setLoading(false);
   };
 
 
   const handleChange = (e:any) => {
-    console.log("EVENT!", e.target)
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0])
       const body = new FormData();
@@ -73,28 +67,42 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="file"
-            accept="audio/*"
-            name="file"
-            onChange={handleChange}
-          />
-          {/* <input
-            type="text"
-            name="youtube"
-            onChange={handleChange}
-          /> */}
-        <button type="submit">Process</button>
-      </form>
-      <div className="results">
+      <main className={roboto.className}>
+        <div className={styles.container}>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <input
+              type="file"
+              id="file-upload"
+              accept="audio/*"
+              name="file"
+              onChange={handleChange}
+              className={styles.fileInput}
+            />
+          <button
+            type="submit"
+            disabled={file ? false : true}
+            className={styles.submitBtn}
+          >
+            Process Audio
+          </button>
+        </form>
+        <div className="results">
+        {loading &&
+          <div className={styles.loadingSpinner}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="30" height="30">
+              <circle fill="none" stroke="#333" strokeWidth="2" cx="12" cy="12" r="10" strokeDasharray="30 60">
+                <animateTransform attributeName="transform" attributeType="XML" type="rotate" dur="1s" from="0 12 12" to="360 12 12" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+          </div>
+        }
         {result && !loading && (
-          <div>
-            <h3>Transcription</h3>
-            {result}
+          <div className={styles.resultContainer}>
+            <h3 className={styles.resultTitle}>Transcription</h3>
+            <p className={styles.resultText}>{result}</p>
           </div>
         )}
+      </div>
       </div>
       </main>
     </>
