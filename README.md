@@ -1,5 +1,7 @@
 # TL;DW: ChatGPT and Whisper APIs
 
+### This is still a work in progress ⚠️
+
 TL;DW (**Too Long, Didn't Watch**) is an app that uses ChatGPT and Whisper APIs to convert any youtube video URL or any uploaded MP3 into a written summary. For the lazy ones ✋.
 
 ## Setup
