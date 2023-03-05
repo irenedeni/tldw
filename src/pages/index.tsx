@@ -87,7 +87,6 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
   const handleVideoChange = (e:any) => {
     if (e.target.value) {
       setVideoUrl(e.target.value)
-      console.log('e.target.value', e.target.value)
     }
   }
 
@@ -97,10 +96,7 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
     sendURL(videoUrl);
   }
   function sendURL(url:any) {
-    // fetch(`http://localhost:3000/api/download?URL=${url}`, {
-    //     method:'GET'
-    // })
-    window.location.href = `http://localhost:3000/api/download?URL=${url}`
+    window.location.href = `/api/download?URL=${url}`
   }
 
   return (
@@ -112,7 +108,14 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={roboto.className}>
-        <div className={styles.container}>
+      <div className={styles.container}>
+        <div className={styles.videoContainer}>
+          <form onSubmit={handleVideoSubmit} className={styles.form}>
+            <input className={styles.urlInput} type="text" placeholder="Youtube video URL" onChange={handleVideoChange} />
+            <button className={styles.videoBtn} type="submit">DOWNLOAD AS MP3</button>
+          </form>
+        </div>
+        <span style={{margin: '40px auto 10px auto'}}>Already have an mp3?</span>
           <form onSubmit={handleSubmit} className={styles.form}>
             <input
               type="file"
@@ -130,13 +133,6 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
               Summarize
             </button>
           </form>
-          <span style={{ marginTop: '30px' }}>OR</span>
-          <div className={styles.videoContainer}>
-            <form onSubmit={handleVideoSubmit} className={styles.form}>
-              <input className={styles.urlInput} type="text" placeholder="Youtube video URL" onChange={handleVideoChange} />
-              <button className={styles.videoBtn} type="submit">Convert</button>
-            </form>
-          </div>
           <div className="results">
             {loading &&
               <div className={styles.loadingSpinner}>
