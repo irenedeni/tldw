@@ -20,7 +20,6 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
   const [file, setFile] = useState(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
-  const [videoReadableStream, setVideoReadableStream] = useState({});
   const [result, setResult] = useState('');
   const [summary, setSummary] = useState('');
   const [loading, setLoading] = useState(false);
@@ -97,7 +96,6 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
     const res = await fetch(`/api/download?URL=${URL}`)
     const dataBlob = await res.blob()
     const audioFile = new File([dataBlob], 'audio.mp3', { type: 'audio/mp3' })
-    setVideoReadableStream(audioFile)
     const responseFile = await uploadFile(audioFile)
     setResult(responseFile.text)
     setLoading(false)
