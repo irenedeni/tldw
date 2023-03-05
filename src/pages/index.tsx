@@ -26,7 +26,6 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
   
 
   const uploadFile = async (file: any) => {
-    setLoading(true);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -51,31 +50,6 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
     return data;
   };
 
-  const handleSubmit = async (e:any) => {
-    e.preventDefault();
-    const res = await uploadFile(file);
-    setResult(res.text);
-    setLoading(false);
-
-    try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ textPrompt: res.text }),
-      });
-
-      const data = await response.json();
-      if (response.status !== 200) {
-        throw data.error || new Error(`Request failed with status ${response.status}`);
-      }
-      setSummary(data.result)
-    } catch(error) {
-      console.error(error);
-    }
-  };
-
   const handleChange = (e:any) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0])
@@ -90,15 +64,21 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
     }
   }
 
-  const handleVideoSubmit = async (e:any) => {
+  const handleSubmit = async (e:any, youtube: boolean) => {
     e.preventDefault()
-    const URL = e.target.elements[0].value
-    const res = await fetch(`/api/download?URL=${URL}`)
-    const dataBlob = await res.blob()
-    const audioFile = new File([dataBlob], 'audio.mp3', { type: 'audio/mp3' })
+    let audioFile
+    setLoading(true)
+    if(youtube) {
+      const URL = e.target.elements[0].value
+      const res = await fetch(`/api/download?URL=${URL}`)
+      const dataBlob = await res.blob()
+      audioFile = new File([dataBlob], 'audio.mp3', { type: 'audio/mp3' })
+    } else {
+      audioFile = file
+    }
     const responseFile = await uploadFile(audioFile)
     setResult(responseFile.text)
-    setLoading(false)
+    
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
@@ -110,10 +90,13 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
 
       const data = await response.json();
       if (response.status !== 200) {
+        setLoading(false)
         throw data.error || new Error(`Request failed with status ${response.status}`);
       }
+      setLoading(false)
       setSummary(data.result);
     } catch(error) {
+      setLoading(false)
       console.error(error);
     }
   }
@@ -129,13 +112,13 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
       <main className={roboto.className}>
       <div className={styles.container}>
         <div className={styles.videoContainer}>
-          <form onSubmit={handleVideoSubmit} className={styles.form}>
+          <form onSubmit={(e) => handleSubmit(e, true)} className={styles.form}>
             <input className={styles.urlInput} type="text" name="URL" placeholder="YouTube URL" onChange={handleVideoChange} />
             <button className={styles.videoBtn} disabled={videoUrl ? false : true} type="submit">Summarize Youtube Video</button>
           </form>
         </div>
         <span style={{margin: '40px auto 10px auto'}}>Already have an mp3?</span>
-          <form onSubmit={handleSubmit} className={styles.form}>
+          <form onSubmit={(e) => handleSubmit(e, false)} className={styles.form}>
             <input
               type="file"
               id="file-upload"
