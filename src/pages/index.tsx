@@ -20,6 +20,7 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
   const [file, setFile] = useState(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
+  const [videoReadableStream, setVideoReadableStream] = useState({});
   const [result, setResult] = useState('');
   const [summary, setSummary] = useState('');
   const [loading, setLoading] = useState(false);
@@ -56,6 +57,7 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
     const res = await uploadFile(file);
     setResult(res.text);
     setLoading(false);
+
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
@@ -69,8 +71,7 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
       if (response.status !== 200) {
         throw data.error || new Error(`Request failed with status ${response.status}`);
       }
-
-      setSummary(data.result);
+      setSummary(data.result)
     } catch(error) {
       console.error(error);
     }
@@ -90,13 +91,33 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
     }
   }
 
-  const handleVideoSubmit = (e:any) => {
-    e.preventDefault();
-    console.log(`URL in handleVideoSubmit: ${videoUrl}`)
-    sendURL(videoUrl);
-  }
-  function sendURL(url:any) {
-    window.location.href = `/api/download?URL=${url}`
+  const handleVideoSubmit = async (e:any) => {
+    e.preventDefault()
+    const URL = e.target.elements[0].value
+    const res = await fetch(`/api/download?URL=${URL}`)
+    const dataBlob = await res.blob()
+    const audioFile = new File([dataBlob], 'audio.mp3', { type: 'audio/mp3' })
+    setVideoReadableStream(audioFile)
+    const responseFile = await uploadFile(audioFile)
+    setResult(responseFile.text)
+    setLoading(false)
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ textPrompt: responseFile.text }),
+      });
+
+      const data = await response.json();
+      if (response.status !== 200) {
+        throw data.error || new Error(`Request failed with status ${response.status}`);
+      }
+      setSummary(data.result);
+    } catch(error) {
+      console.error(error);
+    }
   }
 
   return (
@@ -111,8 +132,8 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
       <div className={styles.container}>
         <div className={styles.videoContainer}>
           <form onSubmit={handleVideoSubmit} className={styles.form}>
-            <input className={styles.urlInput} type="text" placeholder="Youtube video URL" onChange={handleVideoChange} />
-            <button className={styles.videoBtn} type="submit">DOWNLOAD AS MP3</button>
+            <input className={styles.urlInput} type="text" name="URL" placeholder="YouTube URL" onChange={handleVideoChange} />
+            <button className={styles.videoBtn} disabled={videoUrl ? false : true} type="submit">Summarize Youtube Video</button>
           </form>
         </div>
         <span style={{margin: '40px auto 10px auto'}}>Already have an mp3?</span>
@@ -130,7 +151,7 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
               disabled={file ? false : true}
               className={styles.submitBtn}
             >
-              Summarize
+              Summarize Audio File
             </button>
           </form>
           <div className="results">
@@ -167,15 +188,10 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
 export const getStaticProps = () => {
   const whisperEndpoint = process.env.WHISPER_ENDPOINT
   const authToken = process.env.AUTHORIZATION_TOKEN
-  // const data = fetch("/download?URL=https://youtu.be/2Ex99RuKqAw", {
-  //   method:'GET'
-  // }).then(res => res.json())
-  // .then(json => console.log('json',json))
   return {
     props: { 
       whisperEndpoint,
       authToken,
-      // data
     },
   }
 }
