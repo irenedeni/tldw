@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useState, useEffect } from 'react'
+import ytdl from 'ytdl-core';
 import Head from 'next/head'
 import { Roboto } from 'next/font/google'
 import styles from '@/styles/Home.module.css'
@@ -11,14 +13,17 @@ const roboto = Roboto({
 type Props = {
   whisperEndpoint: string;
   authToken: string;
+  data?: any;
 }
 
 export default function Home({ whisperEndpoint, authToken } : Props) {
   const [file, setFile] = useState(null);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
   const [result, setResult] = useState('');
   const [summary, setSummary] = useState('');
   const [loading, setLoading] = useState(false);
+  
 
   const uploadFile = async (file: any) => {
     setLoading(true);
@@ -79,6 +84,24 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
     }
   }
 
+  const handleVideoChange = (e:any) => {
+    if (e.target.value) {
+      setVideoUrl(e.target.value)
+      console.log('e.target.value', e.target.value)
+    }
+  }
+
+  const handleVideoSubmit = (e:any) => {
+    e.preventDefault();
+    console.log(`URL in handleVideoSubmit: ${videoUrl}`)
+    sendURL(videoUrl);
+  }
+  function sendURL(url:any) {
+    // fetch(`http://localhost:3000/api/download?URL=${url}`, {
+    //     method:'GET'
+    // })
+    window.location.href = `http://localhost:3000/api/download?URL=${url}`
+  }
 
   return (
     <>
@@ -94,7 +117,7 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
             <input
               type="file"
               id="file-upload"
-              accept="audio/*"
+              accept="video/*, audio/*"
               name="file"
               onChange={handleChange}
               className={styles.fileInput}
@@ -104,14 +127,21 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
               disabled={file ? false : true}
               className={styles.submitBtn}
             >
-              Process Audio
+              Summarize
             </button>
           </form>
+          <span style={{ marginTop: '30px' }}>OR</span>
+          <div className={styles.videoContainer}>
+            <form onSubmit={handleVideoSubmit} className={styles.form}>
+              <input className={styles.urlInput} type="text" placeholder="Youtube video URL" onChange={handleVideoChange} />
+              <button className={styles.videoBtn} type="submit">Convert</button>
+            </form>
+          </div>
           <div className="results">
             {loading &&
               <div className={styles.loadingSpinner}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="30" height="30">
-                  <circle fill="none" stroke="#333" strokeWidth="2" cx="12" cy="12" r="10" strokeDasharray="30 60">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="50" height="50">
+                  <circle fill="none" stroke="#333" strokeWidth="1" cx="12" cy="12" r="10" strokeDasharray="30 60">
                     <animateTransform attributeName="transform" attributeType="XML" type="rotate" dur="1s" from="0 12 12" to="360 12 12" repeatCount="indefinite"/>
                   </circle>
                 </svg>
@@ -125,7 +155,7 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
                 }
               </div>
             )}
-            {showTranscript &&
+            {showTranscript && !loading &&
               <div className={styles.resultContainer}>
                 <h3 className={styles.resultTitle}>Original Transcription</h3>
                 <p className={styles.resultText}>{result}</p>
@@ -141,11 +171,15 @@ export default function Home({ whisperEndpoint, authToken } : Props) {
 export const getStaticProps = () => {
   const whisperEndpoint = process.env.WHISPER_ENDPOINT
   const authToken = process.env.AUTHORIZATION_TOKEN
-
+  // const data = fetch("/download?URL=https://youtu.be/2Ex99RuKqAw", {
+  //   method:'GET'
+  // }).then(res => res.json())
+  // .then(json => console.log('json',json))
   return {
     props: { 
       whisperEndpoint,
-      authToken
+      authToken,
+      // data
     },
   }
 }
